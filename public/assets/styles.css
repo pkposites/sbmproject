@@ -383,3 +383,21 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -.025em; }
 .legal p, .legal li { margin-top: .75rem; line-height: 1.7; color: oklch(30% .015 250); }
 .legal ul { padding-left: 1.25rem; }
 .legal li { margin-top: .375rem; }
+
+/* Janela "Fale com a SBM ON" (antes de abrir o WhatsApp) */
+.wa-dialog { margin: auto; padding: 0; border: 0; background: transparent; width: min(100% - 2rem, 28rem); max-height: calc(100dvh - 2rem); overflow: auto; color: var(--foreground); }
+.wa-dialog::backdrop { background: oklch(14% .012 250 / .65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.wa-dialog[open] { animation: waIn .35s cubic-bezier(.16,1,.3,1); }
+@keyframes waIn { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+.wa-card { position: relative; background: var(--card); border-radius: 1.5rem; padding: 2rem 1.5rem 1.5rem; box-shadow: var(--shadow-card); }
+@media (min-width: 640px) { .wa-card { padding: 2.25rem 2rem 2rem; } }
+.wa-card h2 { margin-top: .25rem; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.wa-icon { width: 3.5rem; height: 3.5rem; border-radius: 1rem; display: grid; place-items: center; background: oklch(62% .15 155 / .12); color: var(--success); }
+.wa-icon .icon { width: 1.75rem; height: 1.75rem; }
+.wa-close { position: absolute; top: 1rem; right: 1rem; width: 2.25rem; height: 2.25rem; border-radius: 999px; display: grid; place-items: center; color: var(--muted-foreground); transition: background-color .15s, color .15s; }
+.wa-close:hover { background: var(--muted); color: var(--foreground); }
+.wa-close:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.wa-card .consent { font-size: .8125rem; }
+.wa-card .consent strong { color: var(--foreground); }
+body.modal-open { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .wa-dialog[open] { animation: none; } }

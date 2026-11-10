@@ -65,6 +65,7 @@ fbq('track', 'PageView');
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 </svg>
 
 <header class="site-header">
@@ -80,7 +81,7 @@ fbq('track', 'PageView');
       <a href="#duvidas">Dúvidas</a>
     </nav>
     <div class="header-actions">
-      <a class="btn btn-ghost js-wa" href="https://wa.me/5511950279767" target="_blank" rel="noopener" data-wa-origin="header"><svg class="icon icon-sm"><use href="#i-msg"/></svg>Falar no WhatsApp</a>
+      <a class="btn btn-ghost js-wa" href="#fale-conosco" data-wa-origin="header"><svg class="icon icon-sm"><use href="#i-msg"/></svg>Falar no WhatsApp</a>
       <a class="btn btn-wine" href="#cotacao">Cotar agora</a>
     </div>
   </div>
@@ -236,7 +237,7 @@ fbq('track', 'PageView');
               <div class="done-icon"><svg class="icon"><use href="#i-check"/></svg></div>
               <h3 id="doneTitle">Pronto! Seus <span class="js-cur">4</span>% estão garantidos.</h3>
               <p>Abrimos o WhatsApp com seus dados prontos. É só enviar a mensagem que um corretor da SBM ON continua o atendimento.</p>
-              <a class="btn btn-whats btn-lg" id="doneWa" href="https://wa.me/5511950279767" target="_blank" rel="noopener"><svg class="icon"><use href="#i-msg"/></svg>Abrir WhatsApp</a>
+              <a class="btn btn-whats btn-lg" id="doneWa" href="#cotacao"><svg class="icon"><use href="#i-msg"/></svg>Abrir WhatsApp</a>
             </div>
           </div>
         </form>
@@ -358,7 +359,7 @@ fbq('track', 'PageView');
         <p class="eyebrow">Dúvidas</p>
         <h2 class="section-title" style="font-size:clamp(2rem,4vw,2.5rem)">Perguntas frequentes</h2>
         <p class="faq-sub">Não encontrou o que procurava? Fale com a gente no WhatsApp.</p>
-        <a class="btn btn-outline js-wa" href="https://wa.me/5511950279767" target="_blank" rel="noopener" data-wa-origin="faq"><svg class="icon icon-sm"><use href="#i-msg"/></svg>Tirar dúvidas no WhatsApp</a>
+        <a class="btn btn-outline js-wa" href="#fale-conosco" data-wa-origin="faq"><svg class="icon icon-sm"><use href="#i-msg"/></svg>Tirar dúvidas no WhatsApp</a>
       </div>
       <div class="faq reveal">
         <details name="faq"><summary>Como funciona o desconto?<svg class="icon"><use href="#i-chevron"/></svg></summary><p>Ao responder o quiz você já garante 4% de desconto. Se responder também as 2 perguntas bônus (plano de saúde e seguro de vida), o desconto sobe para 10%.</p></details>
@@ -389,7 +390,7 @@ fbq('track', 'PageView');
       <div class="footer-logo"><picture><source srcset="/assets/img/logo.webp" type="image/webp"><img src="/assets/img/logo.png" alt="SBM ON Seguros" width="65" height="40" loading="lazy"></picture></div>
       <p>Corretora de seguros desde 1992 protegendo quem está na estrada.</p>
     </div>
-    <a class="footer-phone js-wa" href="https://wa.me/5511950279767" target="_blank" rel="noopener" data-wa-origin="footer"><svg class="icon"><use href="#i-msg"/></svg>(11) 95027-9767</a>
+    <a class="footer-phone js-wa" href="#fale-conosco" data-wa-origin="footer"><svg class="icon"><use href="#i-msg"/></svg>(11) 95027-9767</a>
   </div>
   <div class="footer-bottom">
     <div class="container">
@@ -399,7 +400,40 @@ fbq('track', 'PageView');
   </div>
 </footer>
 
-<a class="fab js-wa" href="https://wa.me/5511950279767" target="_blank" rel="noopener" aria-label="Falar no WhatsApp" data-wa-origin="flutuante"><svg class="icon"><use href="#i-msg"/></svg></a>
+<a class="fab js-wa" href="#fale-conosco" aria-label="Falar no WhatsApp" data-wa-origin="flutuante"><svg class="icon"><use href="#i-msg"/></svg></a>
+
+
+<!-- Janela "Fale com a SBM ON": todo botão de WhatsApp passa por aqui (nome + WhatsApp + interesse) -->
+<dialog class="wa-dialog" id="waDialog" aria-labelledby="waTitle">
+  <form class="wa-card" id="waForm" name="contato-whatsapp" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+    <input type="hidden" name="form-name" value="contato-whatsapp">
+    <p class="sr-only"><label>Não preencha: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <input type="hidden" name="origem" id="waOrigem">
+    <input type="hidden" name="pagina" id="waPagina">
+    <button type="button" class="wa-close" id="waClose" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button>
+    <div class="wa-icon"><svg class="icon"><use href="#i-msg"/></svg></div>
+    <p class="eyebrow eyebrow-xs" style="margin-top:1rem">Atendimento pelo WhatsApp</p>
+    <h2 id="waTitle">Fale com um corretor da SBM ON</h2>
+    <p class="step-hint">Deixe seu nome e WhatsApp para a gente já te atender pelo nome.</p>
+    <div class="field">
+      <label for="waNome">Seu nome</label>
+      <input id="waNome" name="nome" type="text" autocomplete="name" placeholder="Como podemos te chamar?" required>
+      <p class="field-error" id="waNomeErr"></p>
+    </div>
+    <div class="field">
+      <label for="waTel">WhatsApp / celular</label>
+      <input id="waTel" name="telefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="(11) 91234-5678" required>
+      <p class="field-error" id="waTelErr"></p>
+    </div>
+    <label class="consent">
+      <input type="checkbox" name="interesse_seguros" id="waConsent" value="sim">
+      <span>Confirmo que tenho interesse em falar sobre <strong>seguros com a SBM ON</strong> e concordo com a <a href="/privacidade/" target="_blank">Política de Privacidade</a> (LGPD).</span>
+    </label>
+    <p class="form-error" id="waErr" role="alert"></p>
+    <button type="submit" class="btn btn-whats btn-lg btn-block submit"><svg class="icon"><use href="#i-msg"/></svg><span>Falar no WhatsApp</span></button>
+    <p class="secure"><svg class="icon"><use href="#i-lock"/></svg>Seus dados são protegidos conforme a LGPD.</p>
+  </form>
+</dialog>
 
 <script src="/assets/quiz.js" defer></script>
 </body>

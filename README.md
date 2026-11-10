@@ -23,13 +23,18 @@ Estilos em `public/assets/styles.css`, lógica do quiz em `public/assets/quiz.js
 ## Cadê o Lead
 Script no `<head>` de todas as páginas (`data-key="pk_4b3e…"`, `data-consent="banner"`).
 
-- Cada resposta do quiz vai para `LeadHub.set(...)` (vira coluna na planilha).
-- **O lead é criado quando a pessoa marca "Li e concordo"** com nome e WhatsApp válidos
-  (`LeadHub.identify` + `LeadHub.submit`). Se marcar antes de terminar de digitar,
-  o lead é criado assim que os dados ficarem válidos.
-- O botão final abre o WhatsApp; o tracker anota o clique e coloca o código na mensagem.
-- Também dispara `dataLayer.push({event:'generate_lead'})`, `fbq('track','Lead')` (se houver pixel)
-  e uma cópia de segurança no **Netlify Forms** (formulário `cotacao`).
+**Regra: um lead = um envio com nome + WhatsApp.** Nenhum botão abre o WhatsApp sem dados.
+
+- **Quiz:** cada resposta vai para `LeadHub.set(...)`. O lead é criado quando a pessoa marca
+  "Li e concordo" com nome e WhatsApp válidos (`LeadHub.submit`, origem "Quiz de cotação").
+- **Botões de WhatsApp** (topo, dúvidas, rodapé, flutuante, página de privacidade): abrem a janela
+  "Fale com um corretor da SBM ON" — nome, WhatsApp e a confirmação
+  "tenho interesse em falar sobre seguros com a SBM ON". Só depois disso o lead é criado
+  (origem "Botão WhatsApp (flutuante/header/faq/footer)") e o WhatsApp abre.
+- O WhatsApp é aberto sem passar pelos links/`window.open` que o tracker observa, para não criar
+  uma segunda linha (nem linha vazia). Por isso não há link `wa.me` direto nas páginas.
+- Também dispara `dataLayer.push({event:'generate_lead'})` e a cópia de segurança no **Netlify Forms**
+  (formulários `cotacao` e `contato-whatsapp`).
 
 ## Meta (Pixel + API de Conversões)
 - Pixel `1154264370403111` no `<head>`. Começa com `fbq('consent','revoke')` (LGPD) e é liberado

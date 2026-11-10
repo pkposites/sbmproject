@@ -190,11 +190,7 @@
     captured = phone;
 
     var info = { name: nome.value.trim(), phone: tel.value.trim(), email: email.value.trim() || undefined };
-    lead(function (LH) {
-      LH.set(answers());
-      LH.identify({ name: info.name, phone: info.phone });
-      LH.submit(info);
-    });
+    leadSubmit(info, Object.assign({ origem: "Quiz de cotação", interesse: "Cotação de seguro" }, answers()));
 
     // GTM / pixel (se existirem na página)
     window.dataLayer = window.dataLayer || [];
@@ -277,11 +273,115 @@
   function contactInfo() {
     return captured ? { name: nome.value.trim(), phone: tel.value.trim(), email: email.value.trim() || undefined } : {};
   }
-  // Outros botões de WhatsApp (topo, dúvidas, rodapé, flutuante, "Abrir WhatsApp")
-  Array.prototype.forEach.call(document.querySelectorAll(".js-wa, #doneWa"), function (a) {
-    a.addEventListener("click", function () {
-      metaEvent("Contact", contactInfo(), { content_name: a.getAttribute("data-wa-origin") || "whatsapp" });
+
+  // ---------- Cadê o Lead: um lead = um envio COM dados ----------
+  // O lead é criado só com nome + WhatsApp (LeadHub.submit). O WhatsApp é aberto
+  // sem passar pelo window.open/links observados pelo tracker, para não gerar uma
+  // segunda linha (nem uma linha vazia).
+  var submittedPhones = {};
+  function leadSubmit(info, extra) {
+    var key = digits(info.phone);
+    if (submittedPhones[key]) return;
+    submittedPhones[key] = true;
+    lead(function (LH) {
+      if (extra) LH.set(extra);
+      LH.submit(info);
     });
+  }
+
+  function openWhatsApp(url) {
+    var w = null;
+    try { w = window.open("", "_blank"); } catch (e) {}
+    if (w) {
+      try { w.opener = null; } catch (e) {}
+      w.location.href = url;
+    } else {
+      window.location.href = url;
+    }
+  }
+
+  // ---------- Janela "Fale com a SBM ON" (todos os botões de WhatsApp) ----------
+  var dlg = $("waDialog");
+  var waForm = $("waForm"), waNome = $("waNome"), waTel = $("waTel"), waConsent = $("waConsent");
+  var waOrigin = "site";
+
+  function openContact(origin) {
+    waOrigin = origin || "site";
+    $("waErr").textContent = "";
+    if (!waNome.value && nome.value) waNome.value = nome.value;
+    if (!waTel.value && tel.value) waTel.value = tel.value;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+    document.body.classList.add("modal-open");
+    setTimeout(function () { (waNome.value ? waTel : waNome).focus(); }, 50);
+  }
+  function closeContact() {
+    if (dlg.close) dlg.close(); else dlg.removeAttribute("open");
+  }
+  dlg.addEventListener("close", function () {
+    document.body.classList.remove("modal-open");
+    if (window.location.hash === "#fale-conosco") history.replaceState(null, "", window.location.pathname + window.location.search);
+  });
+  dlg.addEventListener("click", function (e) { if (e.target === dlg) closeContact(); });
+  $("waClose").addEventListener("click", closeContact);
+  waTel.addEventListener("input", function () { waTel.value = maskPhone(waTel.value); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".js-wa"), function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      openContact(a.getAttribute("data-wa-origin"));
+    });
+  });
+  if (window.location.hash === "#fale-conosco") openContact("link");
+
+  function waValidate() {
+    var ok = true;
+    var nOk = waNome.value.trim().length >= 2, d = digits(waTel.value), tOk = d.length === 10 || d.length === 11;
+    $("waNomeErr").textContent = nOk ? "" : "Digite seu nome.";
+    waNome.setAttribute("aria-invalid", String(!nOk));
+    $("waTelErr").textContent = tOk ? "" : "Digite um WhatsApp com DDD.";
+    waTel.setAttribute("aria-invalid", String(!tOk));
+    if (!nOk || !tOk) ok = false;
+    if (ok && !waConsent.checked) {
+      $("waErr").textContent = "Marque a confirmação de interesse para continuar.";
+      ok = false;
+    } else if (ok) $("waErr").textContent = "";
+    return ok;
+  }
+
+  function sendContact() {
+    if (!waValidate()) return;
+    var info = { name: waNome.value.trim(), phone: waTel.value.trim() };
+    var extra = { origem: "Botão WhatsApp (" + waOrigin + ")", interesse: "Falar sobre seguros com a SBM ON" };
+    if (state.veiculo) extra.veiculo = state.veiculo;
+    if (state.uso) extra.uso = state.uso;
+    leadSubmit(info, extra);
+
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: "generate_lead", lead_origem: waOrigin });
+    metaEvent("Lead", info, { content_name: "Contato WhatsApp", content_category: waOrigin });
+    metaEvent("Contact", info, { content_name: waOrigin });
+
+    // cópia no Netlify Forms
+    $("waOrigem").value = waOrigin;
+    $("waPagina").value = window.location.href.split("#")[0];
+    try {
+      fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(waForm)).toString(), keepalive: true }).catch(function () {});
+    } catch (e) {}
+
+    var msg = "Olá! Meu nome é " + info.name + ". Tenho interesse em falar sobre seguros com a SBM ON.";
+    if (state.veiculo) msg += "\nVeículo: " + state.veiculo + (state.uso ? " (" + state.uso + ")" : "");
+    openWhatsApp("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(msg));
+    closeContact();
+  }
+
+  // Botão comum (não "submit"): o tracker cria lead em qualquer envio de formulário,
+  // então só registramos depois de validar nome, WhatsApp e a confirmação.
+  var waBtn = waForm.querySelector('button[type="submit"]');
+  waBtn.type = "button";
+  waBtn.addEventListener("click", sendContact);
+  waForm.addEventListener("submit", function (e) { e.preventDefault(); });
+  [waNome, waTel].forEach(function (input) {
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); sendContact(); } });
   });
 
   // ---------- WhatsApp ----------
@@ -311,13 +411,17 @@
     }
     capture();
     var url = whatsappUrl();
-    $("doneWa").href = url;
+    lastWaUrl = url;
     $("doneTitle").firstChild.textContent = "Pronto, " + nome.value.trim().split(" ")[0] + "! Seus ";
     go(STEPS.indexOf("done"));
-    // window.open é observado pelo Cadê o Lead (anota o clique e põe o código na mensagem)
     metaEvent("Contact", contactInfo(), { content_name: "quiz" });
-    window.open(url, "_blank", "noopener"); // se bloqueado, a pessoa usa o botão "Abrir WhatsApp"
+    openWhatsApp(url); // se bloqueado, a pessoa usa o botão "Abrir WhatsApp"
   }
+  var lastWaUrl = "";
+  $("doneWa").addEventListener("click", function (e) {
+    e.preventDefault();
+    if (lastWaUrl) openWhatsApp(lastWaUrl);
+  });
 
   var submitBtn = $("submitBtn");
   submitBtn.type = "button"; // o envio do formulário é tratado aqui (evita lead duplicado)
