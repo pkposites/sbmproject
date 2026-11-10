@@ -199,7 +199,7 @@
     // GTM / pixel (se existirem na página)
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: "generate_lead", lead_veiculo: state.veiculo, lead_uso: state.uso, lead_desconto: discount() });
-    try { if (typeof window.fbq === "function") window.fbq("track", "Lead"); } catch (e) {}
+    metaEvent("Lead", info, { content_name: "Cotação " + state.veiculo, content_category: state.uso, value: discount(), currency: "BRL" });
     try { window.dispatchEvent(new CustomEvent("sbm:lead", { detail: Object.assign({}, info, answers()) })); } catch (e) {}
 
     // Cópia de segurança no Netlify Forms
@@ -238,6 +238,52 @@
     } catch (e) {}
   }
 
+  // ---------- Meta: Pixel (navegador) + API de Conversões (servidor, /api/meta) ----------
+  // O mesmo event_id vai nos dois, então a Meta conta uma vez só.
+  function cookie(name) {
+    var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : undefined;
+  }
+  function fbc() {
+    var c = cookie("_fbc");
+    if (c) return c;
+    var id = new URLSearchParams(window.location.search).get("fbclid");
+    return id ? "fb.1." + FBC_TS + "." + id : undefined;
+  }
+  var FBC_TS = Date.now(); // momento em que o clique do anúncio chegou à página
+  var lastMeta = {};
+  function metaEvent(name, contact, custom) {
+    var now = Date.now();
+    if (lastMeta[name] && now - lastMeta[name] < 4000) return;
+    lastMeta[name] = now;
+    var eventId = name.toLowerCase() + "-" + now + "-" + Math.random().toString(36).slice(2, 10);
+    try { if (typeof window.fbq === "function") window.fbq("track", name, custom || {}, { eventID: eventId }); } catch (e) {}
+    contact = contact || {};
+    var payload = {
+      event_name: name,
+      event_id: eventId,
+      event_source_url: window.location.href,
+      user_data: {
+        name: contact.name, phone: contact.phone, email: contact.email,
+        fbp: cookie("_fbp"), fbc: fbc(),
+        external_id: window.LeadHub && window.LeadHub.visitorId,
+      },
+      custom_data: custom || {},
+    };
+    try {
+      fetch("/api/meta", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), keepalive: true }).catch(function () {});
+    } catch (e) {}
+  }
+  function contactInfo() {
+    return captured ? { name: nome.value.trim(), phone: tel.value.trim(), email: email.value.trim() || undefined } : {};
+  }
+  // Outros botões de WhatsApp (topo, dúvidas, rodapé, flutuante, "Abrir WhatsApp")
+  Array.prototype.forEach.call(document.querySelectorAll(".js-wa, #doneWa"), function (a) {
+    a.addEventListener("click", function () {
+      metaEvent("Contact", contactInfo(), { content_name: a.getAttribute("data-wa-origin") || "whatsapp" });
+    });
+  });
+
   // ---------- WhatsApp ----------
   function whatsappUrl() {
     var a = answers();
@@ -269,8 +315,8 @@
     $("doneTitle").firstChild.textContent = "Pronto, " + nome.value.trim().split(" ")[0] + "! Seus ";
     go(STEPS.indexOf("done"));
     // window.open é observado pelo Cadê o Lead (anota o clique e põe o código na mensagem)
-    var w = window.open(url, "_blank", "noopener");
-    if (!w) { /* bloqueado: a pessoa usa o botão "Abrir WhatsApp" */ }
+    metaEvent("Contact", contactInfo(), { content_name: "quiz" });
+    window.open(url, "_blank", "noopener"); // se bloqueado, a pessoa usa o botão "Abrir WhatsApp"
   }
 
   var submitBtn = $("submitBtn");

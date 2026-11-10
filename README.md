@@ -5,11 +5,12 @@ trocando o formulário longo por um **quiz de 5 passos**.
 
 | URL | Arquivo |
 |---|---|
-| `/` | `index.html` — landing + quiz |
-| `/privacidade/` | `privacidade/index.html` — Política de Privacidade (LGPD) |
-| 404 | `404.html` |
+| `/` | `public/index.html` — landing + quiz |
+| `/privacidade/` | `public/privacidade/index.html` — Política de Privacidade (LGPD) |
+| 404 | `public/404.html` |
+| `POST /api/meta` | `netlify/functions/meta-capi.mts` — API de Conversões do Meta |
 
-Estilos em `assets/styles.css`, lógica do quiz em `assets/quiz.js`, imagens em `assets/img/`.
+Estilos em `public/assets/styles.css`, lógica do quiz em `public/assets/quiz.js`, imagens em `public/assets/img/`.
 
 ## Quiz
 1. Veículo (carro, moto, autopropelido, caminhão)
@@ -20,7 +21,7 @@ Estilos em `assets/styles.css`, lógica do quiz em `assets/quiz.js`, imagens em 
 6. Pronto → abre o WhatsApp (11) 95027-9767 com a mensagem montada
 
 ## Cadê o Lead
-Script no `<head>` de todas as páginas (`data-key="pk_9440…"`, `data-consent="banner"`).
+Script no `<head>` de todas as páginas (`data-key="pk_4b3e…"`, `data-consent="banner"`).
 
 - Cada resposta do quiz vai para `LeadHub.set(...)` (vira coluna na planilha).
 - **O lead é criado quando a pessoa marca "Li e concordo"** com nome e WhatsApp válidos
@@ -30,7 +31,23 @@ Script no `<head>` de todas as páginas (`data-key="pk_9440…"`, `data-consent=
 - Também dispara `dataLayer.push({event:'generate_lead'})`, `fbq('track','Lead')` (se houver pixel)
   e uma cópia de segurança no **Netlify Forms** (formulário `cotacao`).
 
+## Meta (Pixel + API de Conversões)
+- Pixel `1154264370403111` no `<head>`. Começa com `fbq('consent','revoke')` (LGPD) e é liberado
+  quando a pessoa clica em "Aceitar" no aviso do Cadê o Lead.
+- Eventos: `Lead` (ao marcar "Li e concordo") e `Contact` (ao abrir o WhatsApp).
+  Cada um vai pelo navegador **e** pelo servidor (`/api/meta`) com o mesmo `event_id` → a Meta deduplica.
+- A função criptografa (SHA-256) telefone, e-mail e nome antes de enviar, e adiciona IP, user agent, `fbp`/`fbc`.
+
+### Variáveis de ambiente (Netlify → Site configuration → Environment variables)
+| Variável | Valor |
+|---|---|
+| `META_PIXEL_ID` | `1154264370403111` |
+| `META_CAPI_TOKEN` | token da API de Conversões (**secreto — nunca no código**) |
+| `META_GRAPH_VERSION` | opcional, padrão `v23.0` |
+| `META_TEST_EVENT_CODE` | opcional: código "Testar eventos" do Gerenciador de Eventos (remova depois do teste) |
+
+Mudou uma variável? Faça um novo deploy para valer.
+
 ## Deploy na Netlify
-New site → Import from Git → `pkposites/sbmproject`, branch `main`.
-Build command: vazio. Publish directory: `.` (já está no `netlify.toml`).
-Depois ative **Forms** no painel da Netlify para ver a cópia dos leads.
+Publish directory: `public` · Functions: `netlify/functions` · sem build (já no `netlify.toml`).
+Ative **Forms** no painel da Netlify para ver a cópia dos leads.

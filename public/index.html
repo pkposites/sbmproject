@@ -19,8 +19,25 @@
 <link rel="preload" as="image" href="/assets/img/hero.webp" type="image/webp">
 <link rel="stylesheet" href="/assets/styles.css">
 
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+// LGPD: o pixel só grava cookies depois que a pessoa clica em "Aceitar" no
+// aviso do Cadê o Lead (ele chama fbq('consent','grant') automaticamente).
+try { if (localStorage.getItem('lh_consent') !== 'granted') fbq('consent', 'revoke'); } catch (e) { fbq('consent', 'revoke'); }
+fbq('init', '1154264370403111');
+fbq('track', 'PageView');
+</script>
+<!-- End Meta Pixel Code -->
 <!-- Cadê o Lead: o lead é criado quando a pessoa marca "Li e concordo" no fim do quiz (ver assets/quiz.js) -->
-<script src="https://cadeolead.com.br/tracker.js" data-key="pk_94406836b33f43488b00f37a39bd846c" data-consent="banner" async></script>
+<script src="https://cadeolead.com.br/tracker.js" data-key="pk_4b3ee91d572d450aa98b0dfe2b1f25a3" data-consent="banner" async></script>
 <!-- Fim Cadê o Lead -->
 
 </head>
@@ -206,7 +223,7 @@
             </div>
             <label class="consent">
               <input type="checkbox" name="consentimento" id="consent" value="sim">
-              <span>Li e concordo com a <a href="/privacidade/" target="_blank">Política de Privacidade</a> e autorizo a SBM ON Seguros a usar meus dados para fazer a cotação e entrar em contato comigo, conforme a LGPD (Lei nº 13.709/2018).</span>
+              <span>Li e concordo com a <a href="/privacidade/" target="_blank">Política de Privacidade</a> e autorizo a SBM ON Seguros a usar meus dados para fazer a cotação e entrar em contato comigo, inclusive para medir os anúncios que me trouxeram até aqui, conforme a LGPD (Lei nº 13.709/2018).</span>
             </label>
             <button type="submit" class="btn btn-primary btn-lg btn-block submit" id="submitBtn"><span>Quero meus <span class="js-cur">4</span>% de desconto</span></button>
             <p class="form-error" id="formErr" role="alert"></p>
